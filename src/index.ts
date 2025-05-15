@@ -7,17 +7,17 @@ import type { Variables } from "./types/hono";
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 app.use(cors());
-app.get("/", (c) => c.json("ok"));
+//app.get("/", (c) => c.json("ok"));
 
-app.post("/", async (c) => {
-	const { prompt } = (await c.req.json()) as { prompt: string };
+app.get("/", async (c) => {
+	//const { prompt } = (await c.req.json()) as { prompt: string };
 	const workersai = createWorkersAI({ binding: c.env.AI });
 
 	const result = await generateText({
-		model: workersai("@cf/meta/llama-3.3-70b-instruct-fp8-fast"),
+		model: workersai("@cf/meta/llama-4-scout-17b-16e-instruct"),
 		messages: [
 			{ role: "system", content: "You are a helpful AI assistant" },
-			{ role: "user", content: prompt },
+			{ role: "user", content: "Call the weather tool multiple times" },
 		],
 		tools: {
 			weather: tool({
@@ -32,6 +32,9 @@ app.post("/", async (c) => {
 			}),
 		},
 		maxSteps: 5,
+		onStepFinish: (r) => {
+			console.log(r.response.messages)
+		}
 	});
 
 	return c.json(result);
